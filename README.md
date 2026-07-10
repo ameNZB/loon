@@ -32,8 +32,8 @@ interfaces at its composition root.
 
 ## Status
 
-Currently a nested module inside the ameNZB repository
-(`replace github.com/ameNZB/loon => ./loon`), consumed by the
-reference instance exactly as a third-party dependency would be.
-It moves to its own repository, with tagged releases, when the
-reference instance's public release ships.
+A standalone repository, currently local-only. Two consumers track
+it via a sibling-checkout `replace github.com/ameNZB/loon => ../loon`
+(or `../../loon`): the private ameNZB production instance (~15
+plugins) and the public `loon-demo-site` skeleton. Tagged releases
+begin when the repo publishes.
