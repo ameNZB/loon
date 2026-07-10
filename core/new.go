@@ -59,9 +59,9 @@ func New(d Deps) (*Core, error) {
 	req("HTTPClient", d.HTTPClient != nil)
 	req("Errors", d.Errors != nil)
 	switch d.Process {
-	case "web", "worker", "all":
+	case "web", "worker", "all", "api":
 	default:
-		missing = append(missing, fmt.Sprintf("Process (got %q, want web|worker|all)", d.Process))
+		missing = append(missing, fmt.Sprintf("Process (got %q, want web|worker|all|api)", d.Process))
 	}
 	if len(missing) > 0 {
 		return nil, fmt.Errorf("core: New missing required deps: %s", strings.Join(missing, ", "))

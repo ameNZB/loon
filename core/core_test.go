@@ -264,6 +264,16 @@ func TestNew_RejectsBadProcess(t *testing.T) {
 	}
 }
 
+func TestNew_AcceptsAllProcessKinds(t *testing.T) {
+	for _, p := range []string{"web", "worker", "all", "api"} {
+		d := fullDeps()
+		d.Process = p
+		if _, err := New(d); err != nil {
+			t.Errorf("Process %q should be valid, got %v", p, err)
+		}
+	}
+}
+
 func TestPluginRunsIn(t *testing.T) {
 	webOnly := Metadata{Name: "w"}
 	worker := Metadata{Name: "b", Processes: []string{"worker"}}
