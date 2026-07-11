@@ -4,7 +4,7 @@
 
 <h1 align="center">loon</h1>
 
-loon is the site framework extracted from the ameNZB indexer: a
+loon is a site framework extracted from a production indexer: a
 plugin runtime and mediator kernel for building community content
 sites — Usenet indexers, torrent trackers, or anything with a
 catalog, an economy, and members — the way Gazelle sites build on
@@ -36,8 +36,8 @@ interfaces at its composition root.
 
 ## Status
 
-A standalone repository, currently local-only. Two consumers track
-it via a sibling-checkout `replace github.com/ameNZB/loon => ../loon`
-(or `../../loon`): the private ameNZB production instance (~15
-plugins) and the public `loon-demo-site` skeleton. Tagged releases
-begin when the repo publishes.
+Production-proven: loon runs behind a full content site (~15 plugins)
+and powers the public `loon-demo-site` skeleton, which doubles as
+living documentation. Consumers pin it via a sibling-checkout
+`replace github.com/ameNZB/loon => ../loon` (or `../../loon`). Tagged
+releases will follow.
