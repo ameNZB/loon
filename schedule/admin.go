@@ -187,6 +187,9 @@ const jobsAdminHTML = `<!doctype html>
                         <input type="hidden" name="action" value="{{if .Paused}}resume{{else}}pause{{end}}">
                         <button class="btn btn-sm btn-outline-secondary py-0">{{if .Paused}}Resume{{else}}Pause{{end}}</button>
                     </form>
+                    {{if .HasConfig}}
+                    <a href="/admin/jobs/config?name={{urlquery .Name}}" class="btn btn-sm btn-outline-info py-0">Config</a>
+                    {{end}}
                 </td>
             </tr>
         {{end}}
