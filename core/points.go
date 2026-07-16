@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"errors"
+	"time"
 )
 
 // PointsService is the points-ledger facade. Plugins MUST go
@@ -53,6 +54,42 @@ type PointsService interface {
 	// refund_ prefix so the credit never inflates the earned
 	// reputation tier.
 	Refund(ctx context.Context, userID int64, n int, reason, detail string, ref int64) (int, error)
+
+	// History returns one user's ledger entries newest-first, plus
+	// the total row count for paging (the total ignores limit/offset).
+	//
+	// The three mutators above let a plugin move points but never see
+	// them, so any plugin wanting to show a user their own transactions
+	// had to reach around this interface into host storage — which a
+	// plugin cannot do. That made "points" a facade you could write to
+	// and not read, and left the ledger UI stranded on the host.
+	//
+	// Read-only and self-scoped: it takes a single userID rather than a
+	// filter, so a plugin can render "your points history" but cannot
+	// mine the economy. Admin-wide views stay a host concern.
+	History(ctx context.Context, userID int64, limit, offset int) ([]LedgerEntry, int, error)
+}
+
+// LedgerEntry is one points transaction, as plugins see it.
+//
+// Deliberately a flat DTO rather than the host's row type: core cannot import
+// a host's models package, and the shape a plugin needs to render a table is
+// stable even when the host's storage is not.
+type LedgerEntry struct {
+	// Amount is signed: positive credits, negative debits.
+	Amount int
+	// Balance is the running balance AFTER this entry, so a UI can show
+	// the ledger without re-deriving it.
+	Balance int
+	// Type is the ledger catalog value ("earn_upload", "spend_store_purchase").
+	// Carries the verb prefix described on PointsService.
+	Type string
+	// Description is the free-form label written at award/deduct time.
+	Description string
+	// ReferenceID links the row to a domain entity (request id, item id);
+	// nil when the entry has no referent.
+	ReferenceID *int64
+	CreatedAt   time.Time
 }
 
 // ErrInsufficientPoints is returned by Deduct when the user's
@@ -70,6 +107,7 @@ type PointsAdapter struct {
 	AwardFn   func(ctx context.Context, userID int64, n int, reason, detail string, ref int64) (int, error)
 	DeductFn  func(ctx context.Context, userID int64, n int, reason, detail string, ref int64) (int, error)
 	RefundFn  func(ctx context.Context, userID int64, n int, reason, detail string, ref int64) (int, error)
+	HistoryFn func(ctx context.Context, userID int64, limit, offset int) ([]LedgerEntry, int, error)
 }
 
 // ErrPointsNotWired indicates the points subsystem was not
@@ -119,4 +157,22 @@ func (p *pointsAdapter) Refund(ctx context.Context, userID int64, n int, reason,
 		return 0, nil
 	}
 	return p.a.RefundFn(ctx, userID, n, reason, detail, ref)
+}
+
+// defaultHistoryLimit bounds an unbounded caller. A ledger grows without limit
+// — the reference host has 30k+ rows for a single active economy — so a plugin
+// that forgets to page must not pull all of it into memory to render a table.
+const defaultHistoryLimit = 50
+
+func (p *pointsAdapter) History(ctx context.Context, userID int64, limit, offset int) ([]LedgerEntry, int, error) {
+	if p.a.HistoryFn == nil {
+		return nil, 0, ErrPointsNotWired
+	}
+	if limit <= 0 {
+		limit = defaultHistoryLimit
+	}
+	if offset < 0 {
+		offset = 0
+	}
+	return p.a.HistoryFn(ctx, userID, limit, offset)
 }
